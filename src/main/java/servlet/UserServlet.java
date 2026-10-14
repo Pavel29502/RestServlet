@@ -1,9 +1,6 @@
 package servlet;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonSerializer;
+import com.google.gson.*;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,6 +11,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
+import com.google.gson.JsonSyntaxException;
 
 @WebServlet("/api/users/*")
 public class UserServlet extends HttpServlet{
@@ -68,13 +66,32 @@ public class UserServlet extends HttpServlet{
             BufferedReader reader = req.getReader();
             User userData = gson.fromJson(reader, User.class);
 
+            // ← ДОБАВЛЕНО: проверка на null и пустое имя
+            if (userData == null || userData.getName() == null || userData.getName().trim().isEmpty()) {
+                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                resp.getWriter().write("{\"error\": \"Имя пользователя не может быть пустым\"}");
+                return;
+            }
+
             userService.createUser(userData.getName());
 
             resp.setStatus(HttpServletResponse.SC_CREATED);
             resp.getWriter().write("{\"message\": \"Пользователь создан\"}");
+
+        } catch (JsonSyntaxException e) {
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            resp.getWriter().write("{\"error\": \"Неверный формат JSON\"}");
         } catch (IllegalArgumentException e) {
             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             resp.getWriter().write("{\"error\": \"" + e.getMessage() + "\"}");
+        } catch (RuntimeException e) {
+            if (e.getMessage() != null && e.getMessage().contains("уже существует")) {
+                resp.setStatus(HttpServletResponse.SC_CONFLICT);  // ← 409
+                resp.getWriter().write("{\"error\": \"" + e.getMessage() + "\"}");
+            } else {
+                resp.setStatus(HttpServletResponse.SC_NOT_FOUND);  // ← 404
+                resp.getWriter().write("{\"error\": \"" + e.getMessage() + "\"}");
+            }
         } catch (Exception e) {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             resp.getWriter().write("{\"error\": \"" + e.getMessage() + "\"}");
@@ -100,19 +117,38 @@ public class UserServlet extends HttpServlet{
             BufferedReader reader = req.getReader();
             User userData = gson.fromJson(reader, User.class);
 
+            if (userData == null || userData.getName() == null || userData.getName().trim().isEmpty()) {
+                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                resp.getWriter().write("{\"error\": \"Имя пользователя не может быть пустым\"}");
+                return;
+            }
+
             userService.updateUser(id, userData.getName());
 
             resp.getWriter().write("{\"message\": \"Пользователь обновлен\"}");
+
         } catch (NumberFormatException e) {
             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             resp.getWriter().write("{\"error\": \"Неверный формат ID\"}");
-        } catch (RuntimeException e) {
-            resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+        } catch (JsonSyntaxException e) {
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            resp.getWriter().write("{\"error\": \"Неверный формат JSON\"}");
+        } catch (IllegalArgumentException e) {
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             resp.getWriter().write("{\"error\": \"" + e.getMessage() + "\"}");
+        } catch (RuntimeException e) {
+            if (e.getMessage() != null && e.getMessage().contains("уже существует")) {
+                resp.setStatus(HttpServletResponse.SC_CONFLICT);  // ← 409
+                resp.getWriter().write("{\"error\": \"" + e.getMessage() + "\"}");
+            } else {
+                resp.setStatus(HttpServletResponse.SC_NOT_FOUND);  // ← 404
+                resp.getWriter().write("{\"error\": \"" + e.getMessage() + "\"}");
+            }
         } catch (Exception e) {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             resp.getWriter().write("{\"error\": \"" + e.getMessage() + "\"}");
         }
+
     }
 
     @Override
@@ -134,9 +170,13 @@ public class UserServlet extends HttpServlet{
             userService.deleteUser(id);
 
             resp.getWriter().write("{\"message\": \"Пользователь удален\"}");
+
         } catch (NumberFormatException e) {
             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             resp.getWriter().write("{\"error\": \"Неверный формат ID\"}");
+        } catch (IllegalArgumentException e) {
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            resp.getWriter().write("{\"error\": \"" + e.getMessage() + "\"}");
         } catch (RuntimeException e) {
             resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
             resp.getWriter().write("{\"error\": \"" + e.getMessage() + "\"}");

@@ -86,16 +86,53 @@ public class EventServlet extends HttpServlet {
             BufferedReader reader = req.getReader();
             JsonObject jsonObject = gson.fromJson(reader, JsonObject.class);
 
-            int userId = jsonObject.get("user").getAsJsonObject().get("id").getAsInt();
-            int fileId = jsonObject.get("file").getAsJsonObject().get("id").getAsInt();
+
+            if (jsonObject == null) {
+                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                resp.getWriter().write("{\"error\": \"Тело запроса пустое\"}");
+                return;
+            }
+
+            if (!jsonObject.has("user") || jsonObject.get("user").isJsonNull()) {
+                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                resp.getWriter().write("{\"error\": \"Поле 'user' обязательно\"}");
+                return;
+            }
+
+            if (!jsonObject.has("file") || jsonObject.get("file").isJsonNull()) {
+                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                resp.getWriter().write("{\"error\": \"Поле 'file' обязательно\"}");
+                return;
+            }
+
+            JsonObject userObj = jsonObject.getAsJsonObject("user");
+            if (!userObj.has("id") || userObj.get("id").isJsonNull()) {
+                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                resp.getWriter().write("{\"error\": \"Поле 'user.id' обязательно\"}");
+                return;
+            }
+
+            JsonObject fileObj = jsonObject.getAsJsonObject("file");
+            if (!fileObj.has("id") || fileObj.get("id").isJsonNull()) {
+                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                resp.getWriter().write("{\"error\": \"Поле 'file.id' обязательно\"}");
+                return;
+            }
+
+            int userId = userObj.get("id").getAsInt();
+            int fileId = fileObj.get("id").getAsInt();
 
             eventService.createEvent(userId, fileId);
 
             resp.setStatus(HttpServletResponse.SC_CREATED);
             resp.getWriter().write("{\"message\": \"Событие создано\"}");
+
         } catch (IllegalArgumentException e) {
             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             resp.getWriter().write("{\"error\": \"" + e.getMessage() + "\"}");
+        } catch (JsonSyntaxException e) {
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            resp.getWriter().write("{\"error\": \"Неверный формат JSON\"}");
         } catch (Exception e) {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             resp.getWriter().write("{\"error\": \"" + e.getMessage() + "\"}");
@@ -121,13 +158,19 @@ public class EventServlet extends HttpServlet {
             BufferedReader reader = req.getReader();
             JsonObject jsonObject = gson.fromJson(reader, JsonObject.class);
 
+            if (jsonObject == null) {
+                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                resp.getWriter().write("{\"error\": \"Тело запроса пустое\"}");
+                return;
+            }
+
             Integer newUserId = null;
             Integer newFileId = null;
 
-            if (jsonObject.has("user")) {
+            if (jsonObject.has("user") && !jsonObject.get("user").isJsonNull()) {
                 newUserId = jsonObject.get("user").getAsJsonObject().get("id").getAsInt();
             }
-            if (jsonObject.has("file")) {
+            if (jsonObject.has("file") && !jsonObject.get("file").isJsonNull()) {
                 newFileId = jsonObject.get("file").getAsJsonObject().get("id").getAsInt();
             }
 

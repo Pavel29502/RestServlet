@@ -10,17 +10,24 @@ import java.util.List;
 public class FileDAO {
 
     public void save(File file) {
+        Session session = null;
         Transaction transaction = null;
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+
+        try {
+            session = HibernateUtil.getSessionFactory().openSession();
             transaction = session.beginTransaction();
             session.persist(file);
             transaction.commit();
-            System.out.println("file сохранен" + file.getName());
+            System.out.println("file сохранен " + file.getName());
         } catch (Exception e) {
             if (transaction != null) {
                 transaction.rollback();
             }
-            e.printStackTrace();
+            throw new RuntimeException("Ошибка сохранения файла " + e.getMessage(), e);
+        } finally {
+            if (session != null) {
+                session.close();
+            }
         }
     }
 
@@ -42,57 +49,71 @@ public class FileDAO {
         }
     }
 
-        public File findByFilePath(String filePath) {
-            try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-                Query<File> query = session.createQuery("FROM File WHERE filePath = :filePath", File.class);
-                query.setParameter("filePath", filePath);
-                return query.uniqueResult();
-            }
+    public File findByFilePath(String filePath) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            Query<File> query = session.createQuery("FROM File WHERE filePath = :filePath", File.class);
+            query.setParameter("filePath", filePath);
+            return query.uniqueResult();
         }
+    }
 
-        public List<File> findByName(String name) {
+    public List<File> findByName(String name) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             Query<File> query = session.createQuery("FROM File WHERE name = :name", File.class);
             query.setParameter("name", name);
             return query.list();
         }
-        }
+    }
 
-        public void update(File file) {
+    public void update(File file) {
+        Session session = null;
         Transaction transaction = null;
-        try(Session session = HibernateUtil.getSessionFactory().openSession()) {
+
+        try {
+            session = HibernateUtil.getSessionFactory().openSession();
             transaction = session.beginTransaction();
             session.merge(file);
             transaction.commit();
-            System.out.println("file обновлен" + file.getName());
+            System.out.println("file обновлен " + file.getName());
         } catch (Exception e) {
             if (transaction != null) {
                 transaction.rollback();
             }
-            e.printStackTrace();
+            throw new RuntimeException("Ошибка обновления файла " + e.getMessage(), e);
+        } finally {
+            if (session != null) {
+                session.close();
+            }
         }
-        }
+    }
 
-        public void delete(Integer id) {
+    public void delete(Integer id) {
+        Session session = null;
         Transaction transaction = null;
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+
+        try {
+            session = HibernateUtil.getSessionFactory().openSession();
             transaction = session.beginTransaction();
             File file = session.get(File.class, id);
+
             if (file != null) {
                 session.remove(file);
                 transaction.commit();
-                System.out.println("file удален" + file.getName());
+                System.out.println("file удален " + file.getName());
             } else {
-                System.out.println("file s id " + id + " не найден");
                 transaction.rollback();
+                throw new RuntimeException("Файл с id " + id + " не найден");
             }
         } catch (Exception e) {
             if (transaction != null) {
                 transaction.rollback();
             }
-            e.printStackTrace();
+            throw new RuntimeException("Ошибка удаления файла " + e.getMessage(), e);
+        } finally {
+            if (session != null) {
+                session.close();
+            }
         }
-        }
-
-     }
+    }
+}
 

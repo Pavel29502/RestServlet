@@ -10,8 +10,11 @@ import java.util.List;
 public class EventDAO {
 
     public void save(Event event) {
+        Session session = null;
         Transaction transaction = null;
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+
+        try {
+            session = HibernateUtil.getSessionFactory().openSession();
             transaction = session.beginTransaction();
             session.persist(event);
             transaction.commit();
@@ -20,18 +23,23 @@ public class EventDAO {
             if (transaction != null) {
                 transaction.rollback();
             }
-            e.printStackTrace();
+            throw new RuntimeException("Ошибка сохранения события: " + e.getMessage(), e);
+        } finally {
+            if (session != null) {
+                session.close();
+            }
         }
     }
 
         public Event findById(Integer id) {
             try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-                Event event = session.get(Event.class, id);
-                if (event != null) {
-                    event.getUser().getName();
-                    event.getFile().getName();
-                }
-                return event;
+                Query<Event> query = session.createQuery(
+                        "SELECT DISTINCT e FROM Event e " +
+                                "LEFT JOIN FETCH e.user " +
+                                "LEFT JOIN FETCH e.file " +
+                                "WHERE e.id = :id", Event.class);
+                query.setParameter("id", id);
+                return query.uniqueResult();
             }
         }
 
@@ -45,19 +53,24 @@ public class EventDAO {
         }
     }
 
-        public List<Event> findByUserId(Integer userId) {
+    public List<Event> findByUserId(Integer userId) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            Query<Event> query = session.createQuery(
-                    "FROM Event WHERE user.id = :userId", Event.class);
+            Query<Event> query = session.createQuery("SELECT DISTINCT e FROM Event e " +
+                    "LEFT JOIN FETCH e.user " +
+                    "LEFT JOIN FETCH e.file " +
+                    "WHERE e.user.id = :userId", Event.class);
             query.setParameter("userId", userId);
             return query.list();
         }
-        }
+    }
 
         public List<Event> findByFileId(Integer fileId) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             Query<Event> query = session.createQuery(
-                    "FROM Event WHERE file.id = :fileId", Event.class);
+                    "SELECT DISTINCT e FROM Event e " +
+                            "LEFT JOIN FETCH e.user " +
+                            "LEFT JOIN FETCH e.file " +
+                            "WHERE e.file.id = :fileId", Event.class);
             query.setParameter("fileId", fileId);
             return query.list();
         }
@@ -66,16 +79,22 @@ public class EventDAO {
         public List<Event> findByUserAndFile(Integer userId, Integer fileId) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             Query<Event> query = session.createQuery(
-                    "FROM Event WHERE user.id = :userId AND file.id = :fileId", Event.class);
+                    "SELECT DISTINCT e FROM Event e " +
+                            "LEFT JOIN FETCH e.user " +
+                            "LEFT JOIN FETCH e.file " +
+                            "WHERE e.user.id = :userId AND e.file.id = :fileId", Event.class);
             query.setParameter("userId", userId);
             query.setParameter("fileId", fileId);
             return query.list();
         }
         }
 
-        public void update(Event event) {
+
+    public void update(Event event) {
+        Session session = null;
         Transaction transaction = null;
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+        try {
+            session = HibernateUtil.getSessionFactory().openSession();
             transaction = session.beginTransaction();
             session.merge(event);
             transaction.commit();
@@ -84,29 +103,40 @@ public class EventDAO {
             if (transaction != null) {
                 transaction.rollback();
             }
-            e.printStackTrace();
+            throw new RuntimeException("Ошибка обновления события: " + e.getMessage(), e);
+        } finally {
+            if (session != null) {
+                session.close();
+            }
         }
-        }
+    }
 
-        public void delete(Integer id) {
+    public void delete(Integer id) {
+        Session session = null;
         Transaction transaction = null;
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+        try {
+            session = HibernateUtil.getSessionFactory().openSession();
             transaction = session.beginTransaction();
             Event event = session.get(Event.class, id);
+
             if (event != null) {
                 session.remove(event);
                 transaction.commit();
                 System.out.println("событие удалено");
             } else {
-                System.out.println(" событие с id " + id + " не найдено");
                 transaction.rollback();
+                throw new RuntimeException("Событие с id " + id + " не найдено");
             }
         } catch (Exception e) {
             if (transaction != null) {
                 transaction.rollback();
             }
-            e.printStackTrace();
+            throw new RuntimeException("Ошибка удаления события: " + e.getMessage(), e);
+        } finally {
+            if (session != null) {
+                session.close();
+            }
         }
-        }
+    }
     }
 
