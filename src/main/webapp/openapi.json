@@ -1,0 +1,362 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "File Storage REST API",
+    "version": "1.0.0",
+    "description": "API для управления пользователями, файлами и историей загрузок"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080/RestServle"
+    }
+  ],
+  "paths": {
+    "/api/users": {
+      "get": {
+        "summary": "Получить всех пользователей",
+        "responses": {
+          "200": {
+            "description": "Список пользователей"
+          }
+        }
+      },
+      "post": {
+        "summary": "Создать пользователя",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Пользователь создан"
+          },
+          "400": {
+            "description": "Неверный запрос"
+          },
+          "409": {
+            "description": "Дубликат"
+          }
+        }
+      }
+    },
+    "/api/users/{id}": {
+      "get": {
+        "summary": "Получить пользователя по ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Пользователь"
+          }
+        }
+      },
+      "put": {
+        "summary": "Обновить пользователя",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Обновлено"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Удалить пользователя",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Удалено"
+          }
+        }
+      }
+    },
+    "/api/files": {
+      "get": {
+        "summary": "Получить все файлы",
+        "responses": {
+          "200": {
+            "description": "Список файлов"
+          }
+        }
+      },
+      "post": {
+        "summary": "Загрузить файл (multipart)",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "userId": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Файл загружен"
+          }
+        }
+      }
+    },
+    "/api/files/{id}": {
+      "get": {
+        "summary": "Получить файл по ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Файл"
+          }
+        }
+      },
+      "put": {
+        "summary": "Обновить файл",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Обновлено"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Удалить файл",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Удалено"
+          }
+        }
+      }
+    },
+    "/api/files/download/{id}": {
+      "get": {
+        "summary": "Скачать файл",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Файл"
+          }
+        }
+      }
+    },
+    "/api/events": {
+      "get": {
+        "summary": "Получить все события",
+        "responses": {
+          "200": {
+            "description": "Список событий"
+          }
+        }
+      },
+      "post": {
+        "summary": "Создать событие",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "user": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      }
+                    }
+                  },
+                  "file": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Событие создано"
+          }
+        }
+      }
+    },
+    "/api/events/{id}": {
+      "get": {
+        "summary": "Получить событие по ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Событие"
+          }
+        }
+      },
+      "put": {
+        "summary": "Обновить событие",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Обновлено"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Удалить событие",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Удалено"
+          }
+        }
+      }
+    },
+    "/api/events/user/{userId}": {
+      "get": {
+        "summary": "События по пользователю",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "События"
+          }
+        }
+      }
+    },
+    "/api/events/file/{fileId}": {
+      "get": {
+        "summary": "События по файлу",
+        "parameters": [
+          {
+            "name": "fileId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "События"
+          }
+        }
+      }
+    }
+  }
+}
